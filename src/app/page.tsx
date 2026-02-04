@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import MatrixChart from "@/components/MatrixChart";
 
+/* =========================
+   Types
+========================= */
 type Shoe = {
   id?: string | number;
   brand: string | null;
@@ -17,11 +20,10 @@ type Shoe = {
   stack_mm?: number | null;
   display_score: number | null;
   proxy_score: number | null;
-  runrepeat_url: string | null;
   speed_score: number | null;
   cushion_score: number | null;
   stability_score: number | null;
-
+  runrepeat_url: string | null;
 };
 
 type Facets = {
@@ -31,11 +33,14 @@ type Facets = {
   use_types: string[];
 };
 
+/* =========================
+   Page
+========================= */
 export default function Page() {
   const [q, setQ] = useState("");
   const [view, setView] = useState<"list" | "matrix">("list");
 
-  // filtri dropdown
+  // filters
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
   const [terrain, setTerrain] = useState("");
@@ -45,7 +50,7 @@ export default function Page() {
     "display_desc" | "proxy_desc" | "weight_asc" | "drop_asc"
   >("display_desc");
 
-  // facets per dropdown
+  // facets
   const [facets, setFacets] = useState<Facets>({
     brands: [],
     categories: [],
@@ -53,11 +58,13 @@ export default function Page() {
     use_types: [],
   });
 
-  const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Shoe[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Carica facets all’avvio
+  /* =========================
+     Load filters
+  ========================= */
   useEffect(() => {
     (async () => {
       try {
@@ -71,17 +78,19 @@ export default function Page() {
           use_types: json.use_types || [],
         });
       } catch (e) {
-        // Non blocchiamo la pagina se facets fallisce
-        console.warn("Filters error:", e);
+        console.warn("Filters error", e);
       }
     })();
   }, []);
 
+  /* =========================
+     Build search URL
+  ========================= */
   const url = useMemo(() => {
     const p = new URLSearchParams();
     p.set("limit", "30");
 
-    if (q.trim()) p.set("q", q.trim());
+    if (q) p.set("q", q);
     if (brand) p.set("brand", brand);
     if (category) p.set("category", category);
     if (terrain) p.set("terrain", terrain);
@@ -92,11 +101,14 @@ export default function Page() {
     return `/api/search?${p.toString()}`;
   }, [q, brand, category, terrain, useType, plate, sort]);
 
-  async function runSearch(finalUrl: string) {
+  /* =========================
+     Search
+  ========================= */
+  async function runSearch() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(finalUrl);
+      const res = await fetch(url);
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Errore API");
       setResults(json.results || []);
@@ -108,9 +120,9 @@ export default function Page() {
     }
   }
 
-  // ✅ auto-search con debounce
+  // auto-search debounce
   useEffect(() => {
-    const t = setTimeout(() => runSearch(url), 450);
+    const t = setTimeout(runSearch, 400);
     return () => clearTimeout(t);
   }, [url]);
 
@@ -124,252 +136,129 @@ export default function Page() {
     setSort("display_desc");
   }
 
+  /* =========================
+     Render
+  ========================= */
   return (
-    <main style={{ maxWidth: 980, margin: "40px auto", padding: 16, fontFamily: "system-ui" }}>
-      <h1 style={{ fontSize: 24, marginBottom: 8 }}>Shoe Search</h1>
-      <p style={{ marginTop: 0, opacity: 0.8 }}>
-        Cerca per brand/model + filtri. La ricerca parte automaticamente quando cambi qualcosa.
+    <main
+      style={{
+        maxWidth: 1000,
+        margin: "40px auto",
+        padding: 16,
+        fontFamily: "system-ui",
+      }}
+    >
+      <h1>RunMatch</h1>
+      <p style={{ opacity: 0.8 }}>
+        Ricerca e confronto scarpe running · Lista / Matrice
       </p>
 
-      {/* QUERY + BOTTONI */}
-      <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+      {/* Search */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Es: Nike, Pegasus, trail..."
-          style={{
-            flex: "1 1 320px",
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "1px solid #ccc",
-          }}
+          placeholder="Nike, Pegasus, trail..."
+          style={{ flex: "1 1 300px", padding: 10 }}
         />
-
-        <button
-          onClick={() => runSearch(url)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #333",
-            background: "#111",
-            color: "white",
-            cursor: "pointer",
-          }}
-          disabled={loading}
-        >
-          {loading ? "..." : "Cerca"}
+        <button onClick={runSearch} disabled={loading}>
+          Cerca
         </button>
-
-        <button
-          onClick={resetFilters}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #ccc",
-            background: "white",
-            cursor: "pointer",
-          }}
-          disabled={loading}
-        >
-          Reset
-        </button>
+        <button onClick={resetFilters}>Reset</button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-  <button
-    onClick={() => setView("list")}
-    style={{
-      padding: "8px 12px",
-      borderRadius: 999,
-      border: "1px solid #ccc",
-      background: view === "list" ? "#111" : "white",
-      color: view === "list" ? "white" : "#111",
-      cursor: "pointer",
-    }}
-  >
-    Lista
-  </button>
-  <button
-    onClick={() => setView("matrix")}
-    style={{
-      padding: "8px 12px",
-      borderRadius: 999,
-      border: "1px solid #ccc",
-      background: view === "matrix" ? "#111" : "white",
-      color: view === "matrix" ? "white" : "#111",
-      cursor: "pointer",
-    }}
-  >
-    Matrice
-  </button>
-</div>
+      {/* View toggle */}
+      <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+        <button onClick={() => setView("list")}>Lista</button>
+        <button onClick={() => setView("matrix")}>Matrice</button>
+      </div>
 
-
-      {/* DROPDOWN FILTRI */}
+      {/* Filters */}
       <div
         style={{
-          marginTop: 14,
+          marginTop: 16,
           display: "grid",
           gap: 10,
           gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
         }}
       >
-        <FilterSelect
-          label="Brand"
-          value={brand}
-          onChange={setBrand}
-          options={facets.brands}
-          placeholder="Tutti"
-        />
-
+        <FilterSelect label="Brand" value={brand} onChange={setBrand} options={facets.brands} />
         <FilterSelect
           label="Category"
           value={category}
           onChange={setCategory}
           options={facets.categories}
-          placeholder="Tutte"
         />
-
         <FilterSelect
           label="Terrain"
           value={terrain}
           onChange={setTerrain}
           options={facets.terrains}
-          placeholder="Tutti"
         />
-
         <FilterSelect
           label="Use type"
           value={useType}
           onChange={setUseType}
           options={facets.use_types}
-          placeholder="Tutti"
         />
-
-        <div style={{ display: "grid", gap: 6 }}>
-          <label style={{ fontSize: 13, opacity: 0.8 }}>Plate</label>
-          <select
-            value={plate}
-            onChange={(e) => setPlate(e.target.value as any)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              background: "white",
-            }}
-          >
-            <option value="">Tutte</option>
-            <option value="true">Solo con piastra</option>
-            <option value="false">Solo senza piastra</option>
-          </select>
-        </div>
-
-        <div style={{ display: "grid", gap: 6 }}>
-          <label style={{ fontSize: 13, opacity: 0.8 }}>Ordina per</label>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as any)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              background: "white",
-            }}
-          >
-            <option value="display_desc">display_score ↓</option>
-            <option value="proxy_desc">proxy_score ↓</option>
-            <option value="weight_asc">peso ↑</option>
-            <option value="drop_asc">drop ↑</option>
-          </select>
-        </div>
       </div>
 
-      {error && (
-        <div style={{ marginTop: 16, color: "crimson" }}>
-          <b>Errore:</b> {error}
-        </div>
-      )}
+      {error && <div style={{ color: "crimson" }}>{error}</div>}
+      <div style={{ marginTop: 16 }}>Risultati: {results.length}</div>
 
-      <div style={{ marginTop: 18, opacity: 0.8 }}>
-        {loading ? "Caricamento..." : <>Risultati: <b>{results.length}</b></>}
+      {/* Results */}
+      <div style={{ marginTop: 16 }}>
+        {view === "matrix" ? (
+          <MatrixChart data={results as any} />
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            {results.map((s, i) => (
+              <div
+                key={(s.id ?? i).toString()}
+                style={{ border: "1px solid #ddd", borderRadius: 8, padding: 10 }}
+              >
+                <b>
+                  {(s.brand ?? "").toUpperCase()} — {s.model}
+                </b>
+                <div style={{ fontSize: 13, opacity: 0.75 }}>
+                  {s.category} · {s.terrain} · {s.use_type}
+                </div>
+                <div>
+                  display: <b>{s.display_score ?? "-"}</b> · proxy:{" "}
+                  <b>{s.proxy_score ?? "-"}</b>
+                </div>
+                {s.runrepeat_url && (
+                  <a href={s.runrepeat_url} target="_blank" rel="noreferrer">
+                    RunRepeat →
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-    <div style={{ marginTop: 12 }}>
-  {view === "matrix" ? (
-    <MatrixChart data={results as any} />
-  ) : (
-    <div style={{ display: "grid", gap: 10 }}>
-      {results.map((s, idx) => (
-        <div
-          key={(s.id ?? idx).toString()}
-          style={{
-            border: "1px solid #e5e5e5",
-            borderRadius: 12,
-            padding: 12,
-            display: "grid",
-            gap: 6,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <div>
-              <div style={{ fontWeight: 700 }}>
-                {(s.brand ?? "").toUpperCase()} — {s.model}
-              </div>
-              <div style={{ opacity: 0.75, fontSize: 14 }}>
-                {s.category} · {s.terrain} · {s.use_type} {s.year ? `· ${s.year}` : ""}
-              </div>
-            </div>
-            <div style={{ textAlign: "right", minWidth: 120 }}>
-              <div style={{ fontSize: 13, opacity: 0.7 }}>display_score</div>
-              <div style={{ fontWeight: 800, fontSize: 18 }}>{s.display_score ?? "-"}</div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ fontSize: 13, opacity: 0.75 }}>
-              proxy_score: <b>{s.proxy_score ?? "-"}</b>
-            </div>
-            {s.runrepeat_url && (
-              <a href={s.runrepeat_url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>
-                RunRepeat →
-              </a>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
     </main>
-);
+  );
 }
 
+/* =========================
+   Filter select
+========================= */
 function FilterSelect(props: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: string[];
-  placeholder: string;
 }) {
-  const { label, value, onChange, options, placeholder } = props;
-
+  const { label, value, onChange, options } = props;
   return (
-    <div style={{ display: "grid", gap: 6 }}>
-      <label style={{ fontSize: 13, opacity: 0.8 }}>{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          padding: "10px 12px",
-          borderRadius: 10,
-          border: "1px solid #ddd",
-          background: "white",
-        }}
-      >
-        <option value="">{placeholder}</option>
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
+    <div>
+      <label style={{ fontSize: 13 }}>{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Tutti</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
           </option>
         ))}
       </select>

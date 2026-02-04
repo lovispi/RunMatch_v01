@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   let query = supabaseServer
     .from("shoes")
     .select(
-      "id, brand, model, year, category, terrain, use_type, plate, weight_g, drop_mm, stack_mm, display_score, proxy_score, runrepeat_url"
+      "id, brand, model, year, category, terrain, use_type, plate, weight_g, drop_mm, stack_mm, display_score, proxy_score, runrepeat_url, speed_score, cushion_score, stability_score"
     );
 
   // Full-text "basic" su alcune colonne

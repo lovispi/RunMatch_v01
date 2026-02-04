@@ -12,7 +12,8 @@
     "@supabase/supabase-js": "^2.45.4",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -26,5 +27,6 @@
     "typescript": "^5"
   }
 }
+
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Shoe = {
   id?: string | number;
@@ -15,17 +15,53 @@ type Shoe = {
   runrepeat_url: string | null;
 };
 
+type FiltersResponse = {
+  brands: string[];
+  categories: string[];
+  terrains: string[];
+  use_types: string[];
+  error?: string;
+};
+
 export default function Page() {
+  // testo libero
   const [q, setQ] = useState("");
+
+  // filtri dropdown
+  const [brand, setBrand] = useState("");
+  const [category, setCategory] = useState("");
+  const [terrain, setTerrain] = useState("");
+  const [useType, setUseType] = useState("");
+
+  // opzioni dropdown
+  const [filters, setFilters] = useState<FiltersResponse>({
+    brands: [],
+    categories: [],
+    terrains: [],
+    use_types: [],
+  });
+
   const [loading, setLoading] = useState(false);
+  const [loadingFilters, setLoadingFilters] = useState(false);
   const [results, setResults] = useState<Shoe[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  async function runSearch(query: string) {
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
+    if (brand) params.set("brand", brand);
+    if (category) params.set("category", category);
+    if (terrain) params.set("terrain", terrain);
+    if (useType) params.set("use_type", useType);
+    params.set("limit", "30");
+    return params.toString();
+  }, [q, brand, category, terrain, useType]);
+
+  async function runSearch() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=30`);
+      const res = await fetch(`/api/search?${queryString}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Errore API");
       setResults(json.results || []);
@@ -37,44 +73,171 @@ export default function Page() {
     }
   }
 
-  // Carica "top shoes" all'apertura (q vuota)
+  async function loadFilters() {
+    setLoadingFilters(true);
+    try {
+      const res = await fetch("/api/filters");
+      const json = (await res.json()) as FiltersResponse;
+      if (!res.ok) throw new Error((json as any)?.error || "Errore API filters");
+      setFilters({
+        brands: json.brands || [],
+        categories: json.categories || [],
+        terrains: json.terrains || [],
+        use_types: json.use_types || [],
+      });
+    } catch (e: any) {
+      // non blocca l'app: semplicemente niente dropdown
+      setFilters({ brands: [], categories: [], terrains: [], use_types: [] });
+    } finally {
+      setLoadingFilters(false);
+    }
+  }
+
+  function resetFilters() {
+    setQ("");
+    setBrand("");
+    setCategory("");
+    setTerrain("");
+    setUseType("");
+  }
+
+  // all'apertura: carico filtri + prima ricerca (top shoes)
   useEffect(() => {
-    runSearch("");
+    loadFilters();
+    // top shoes (nessun filtro, q vuota)
+    setTimeout(() => runSearch(), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <main style={{ maxWidth: 900, margin: "40px auto", padding: 16, fontFamily: "system-ui" }}>
       <h1 style={{ fontSize: 24, marginBottom: 8 }}>Shoe Search</h1>
       <p style={{ marginTop: 0, opacity: 0.8 }}>
-        Cerca per brand, model, category, terrain, use type. (Se vuoto: top per display_score)
+        Usa i filtri (dropdown) e/o testo libero. Se tutto vuoto: top per display_score.
       </p>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Es: Nike, Pegasus, trail, stability..."
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "1px solid #ccc",
-          }}
-        />
-        <button
-          onClick={() => runSearch(q)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #333",
-            background: "#111",
-            color: "white",
-            cursor: "pointer",
-          }}
-          disabled={loading}
-        >
-          {loading ? "..." : "Cerca"}
-        </button>
+      {/* FILTRI */}
+      <div
+        style={{
+          marginTop: 16,
+          border: "1px solid #eee",
+          borderRadius: 12,
+          padding: 12,
+          display: "grid",
+          gap: 10,
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
+          <select
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+            style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #ccc" }}
+            disabled={loadingFilters}
+          >
+            <option value="">{loadingFilters ? "Brand (carico...)" : "Brand (tutti)"}</option>
+            {filters.brands.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #ccc" }}
+            disabled={loadingFilters}
+          >
+            <option value="">{loadingFilters ? "Category (carico...)" : "Category (tutte)"}</option>
+            {filters.categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={terrain}
+            onChange={(e) => setTerrain(e.target.value)}
+            style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #ccc" }}
+            disabled={loadingFilters}
+          >
+            <option value="">{loadingFilters ? "Terrain (carico...)" : "Terrain (tutti)"}</option>
+            {filters.terrains.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={useType}
+            onChange={(e) => setUseType(e.target.value)}
+            style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #ccc" }}
+            disabled={loadingFilters}
+          >
+            <option value="">{loadingFilters ? "Use type (carico...)" : "Use type (tutti)"}</option>
+            {filters.use_types.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* INPUT TESTO + BOTTONI */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Testo libero (es: Pegasus, stability, 2023...)"
+            style={{
+              flex: 1,
+              padding: "10px 12px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+            }}
+          />
+
+          <button
+            onClick={() => runSearch()}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid #333",
+              background: "#111",
+              color: "white",
+              cursor: "pointer",
+              minWidth: 110,
+            }}
+            disabled={loading}
+          >
+            {loading ? "..." : "Cerca"}
+          </button>
+
+          <button
+            onClick={() => {
+              resetFilters();
+              // dopo reset, ricarico top shoes
+              setTimeout(() => runSearch(), 0);
+            }}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              background: "white",
+              cursor: "pointer",
+              minWidth: 110,
+            }}
+            disabled={loading}
+          >
+            Reset
+          </button>
+        </div>
+
+        <div style={{ fontSize: 12, opacity: 0.65 }}>
+          Query attiva: <code>{`/api/search?${queryString}`}</code>
+        </div>
       </div>
 
       {error && (

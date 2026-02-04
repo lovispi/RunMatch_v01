@@ -38,11 +38,11 @@ export async function GET(req: Request) {
     );
   }
 
-  // Filtri esatti (case-insensitive usando ilike)
-  if (brand) query = query.ilike("brand", brand);
-  if (category) query = query.ilike("category", category);
-  if (terrain) query = query.ilike("terrain", terrain);
-  if (use_type) query = query.ilike("use_type", use_type);
+// Filtri esatti (valori arrivano dal dropdown -> match esatto)
+if (brand) query = query.eq("brand", brand);
+if (category) query = query.eq("category", category);
+if (terrain) query = query.eq("terrain", terrain);
+if (use_type) query = query.eq("use_type", use_type);
 
   // Filtri numerici
   if (min_display) query = query.gte("display_score", Number(min_display));

@@ -55,9 +55,9 @@ export default function Page() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/facets");
+        const res = await fetch("/api/filters");
         const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "Errore facets");
+        if (!res.ok) throw new Error(json?.error || "Errore filters");
         setFacets({
           brands: json.brands || [],
           categories: json.categories || [],
@@ -66,7 +66,7 @@ export default function Page() {
         });
       } catch (e) {
         // Non blocchiamo la pagina se facets fallisce
-        console.warn("Facets error:", e);
+        console.warn("Filters error:", e);
       }
     })();
   }, []);

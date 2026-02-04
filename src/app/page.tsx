@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import MatrixChart from "@/components/MatrixChart";
 
 type Shoe = {
   id?: string | number;
@@ -17,6 +18,10 @@ type Shoe = {
   display_score: number | null;
   proxy_score: number | null;
   runrepeat_url: string | null;
+  speed_score: number | null;
+  cushion_score: number | null;
+  stability_score: number | null;
+
 };
 
 type Facets = {
@@ -28,6 +33,7 @@ type Facets = {
 
 export default function Page() {
   const [q, setQ] = useState("");
+  const [view, setView] = useState<"list" | "matrix">("list");
 
   // filtri dropdown
   const [brand, setBrand] = useState("");
@@ -35,7 +41,7 @@ export default function Page() {
   const [terrain, setTerrain] = useState("");
   const [useType, setUseType] = useState("");
   const [plate, setPlate] = useState<"" | "true" | "false">("");
-  const [sort, setSort] = useState<
+  const [sort, setSort] = useState<;
     "display_desc" | "proxy_desc" | "weight_asc" | "drop_asc"
   >("display_desc");
 
@@ -169,6 +175,36 @@ export default function Page() {
         </button>
       </div>
 
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+  <button
+    onClick={() => setView("list")}
+    style={{
+      padding: "8px 12px",
+      borderRadius: 999,
+      border: "1px solid #ccc",
+      background: view === "list" ? "#111" : "white",
+      color: view === "list" ? "white" : "#111",
+      cursor: "pointer",
+    }}
+  >
+    Lista
+  </button>
+  <button
+    onClick={() => setView("matrix")}
+    style={{
+      padding: "8px 12px",
+      borderRadius: 999,
+      border: "1px solid #ccc",
+      background: view === "matrix" ? "#111" : "white",
+      color: view === "matrix" ? "white" : "#111",
+      cursor: "pointer",
+    }}
+  >
+    Matrice
+  </button>
+</div>
+
+
       {/* DROPDOWN FILTRI */}
       <div
         style={{
@@ -258,48 +294,53 @@ export default function Page() {
         {loading ? "Caricamento..." : <>Risultati: <b>{results.length}</b></>}
       </div>
 
-      <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-        {results.map((s, idx) => (
-          <div
-            key={(s.id ?? idx).toString()}
-            style={{
-              border: "1px solid #e5e5e5",
-              borderRadius: 12,
-              padding: 12,
-              display: "grid",
-              gap: 6,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-              <div>
-                <div style={{ fontWeight: 700 }}>
-                  {(s.brand ?? "").toUpperCase()} — {s.model}
-                </div>
-                <div style={{ opacity: 0.75, fontSize: 14 }}>
-                  {s.category} · {s.terrain} · {s.use_type} {s.year ? `· ${s.year}` : ""}
-                </div>
+    <div style={{ marginTop: 12 }}>
+  {view === "matrix" ? (
+    <MatrixChart data={results as any} />
+  ) : (
+    <div style={{ display: "grid", gap: 10 }}>
+      {results.map((s, idx) => (
+        <div
+          key={(s.id ?? idx).toString()}
+          style={{
+            border: "1px solid #e5e5e5",
+            borderRadius: 12,
+            padding: 12,
+            display: "grid",
+            gap: 6,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <div>
+              <div style={{ fontWeight: 700 }}>
+                {(s.brand ?? "").toUpperCase()} — {s.model}
               </div>
-              <div style={{ textAlign: "right", minWidth: 120 }}>
-                <div style={{ fontSize: 13, opacity: 0.7 }}>display_score</div>
-                <div style={{ fontWeight: 800, fontSize: 18 }}>{s.display_score ?? "-"}</div>
+              <div style={{ opacity: 0.75, fontSize: 14 }}>
+                {s.category} · {s.terrain} · {s.use_type} {s.year ? `· ${s.year}` : ""}
               </div>
             </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-              <div style={{ fontSize: 13, opacity: 0.75 }}>
-                proxy_score: <b>{s.proxy_score ?? "-"}</b>
-              </div>
-              {s.runrepeat_url && (
-                <a href={s.runrepeat_url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>
-                  RunRepeat →
-                </a>
-              )}
+            <div style={{ textAlign: "right", minWidth: 120 }}>
+              <div style={{ fontSize: 13, opacity: 0.7 }}>display_score</div>
+              <div style={{ fontWeight: 800, fontSize: 18 }}>{s.display_score ?? "-"}</div>
             </div>
           </div>
-        ))}
-      </div>
-    </main>
-  );
+
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ fontSize: 13, opacity: 0.75 }}>
+              proxy_score: <b>{s.proxy_score ?? "-"}</b>
+            </div>
+            {s.runrepeat_url && (
+              <a href={s.runrepeat_url} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>
+                RunRepeat →
+              </a>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+);
 }
 
 function FilterSelect(props: {

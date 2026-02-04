@@ -41,7 +41,7 @@ export default function Page() {
   const [terrain, setTerrain] = useState("");
   const [useType, setUseType] = useState("");
   const [plate, setPlate] = useState<"" | "true" | "false">("");
-  const [sort, setSort] = useState<;
+  const [sort, setSort] = useState<
     "display_desc" | "proxy_desc" | "weight_asc" | "drop_asc"
   >("display_desc");
 

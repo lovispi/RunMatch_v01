@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import MatrixChart from "@/components/MatrixChart";
 
 type Shoe = {
@@ -34,40 +33,34 @@ type Facets = {
 type SortKey = "display_desc" | "proxy_desc" | "weight_asc" | "drop_asc";
 
 function distanceToUser(s: Shoe, ux: number, uy: number) {
-  if (typeof s.cushion_score !== "number" || typeof s.speed_score !== "number") return Number.POSITIVE_INFINITY;
+  if (typeof s.cushion_score !== "number" || typeof s.speed_score !== "number") {
+    return Number.POSITIVE_INFINITY;
+  }
   const dx = s.cushion_score - ux;
   const dy = s.speed_score - uy;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-export default function Page() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+function safeGetSearchParams(): URLSearchParams {
+  if (typeof window === "undefined") return new URLSearchParams();
+  return new URLSearchParams(window.location.search);
+}
 
-  // ✅ user point (mock per ora)
+export default function Page() {
+  // ✅ punto utente (mock per ora)
   const userX = 6.5;
   const userY = 7.2;
 
-  // ✅ stato UI + filtri (inizializzati dalla URL)
-  const [q, setQ] = useState(searchParams.get("q") || "");
-  const [view, setView] = useState<"list" | "matrix">(
-    (searchParams.get("view") === "matrix" ? "matrix" : "list") as "list" | "matrix"
-  );
+  // ✅ stato UI + filtri
+  const [q, setQ] = useState("");
+  const [view, setView] = useState<"list" | "matrix">("list");
 
-  const [brand, setBrand] = useState(searchParams.get("brand") || "");
-  const [category, setCategory] = useState(searchParams.get("category") || "");
-  const [terrain, setTerrain] = useState(searchParams.get("terrain") || "");
-  const [useType, setUseType] = useState(searchParams.get("use_type") || "");
-  const [plate, setPlate] = useState<"" | "true" | "false">(
-    (searchParams.get("plate") === "true"
-      ? "true"
-      : searchParams.get("plate") === "false"
-      ? "false"
-      : "") as "" | "true" | "false"
-  );
-  const [sort, setSort] = useState<SortKey>(
-    (searchParams.get("sort") as SortKey) || "display_desc"
-  );
+  const [brand, setBrand] = useState("");
+  const [category, setCategory] = useState("");
+  const [terrain, setTerrain] = useState("");
+  const [useType, setUseType] = useState("");
+  const [plate, setPlate] = useState<"" | "true" | "false">("");
+  const [sort, setSort] = useState<SortKey>("display_desc");
 
   // facets dropdown
   const [facets, setFacets] = useState<Facets>({
@@ -81,8 +74,29 @@ export default function Page() {
   const [results, setResults] = useState<Shoe[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ STEP 4: sync stato -> URL (con debounce leggero)
+  // ✅ (STEP 4) Leggi querystring SOLO lato client all’avvio
   useEffect(() => {
+    const sp = safeGetSearchParams();
+
+    setQ(sp.get("q") || "");
+    setView(sp.get("view") === "matrix" ? "matrix" : "list");
+
+    setBrand(sp.get("brand") || "");
+    setCategory(sp.get("category") || "");
+    setTerrain(sp.get("terrain") || "");
+    setUseType(sp.get("use_type") || "");
+
+    const p = sp.get("plate");
+    setPlate(p === "true" ? "true" : p === "false" ? "false" : "");
+
+    const s = sp.get("sort") as SortKey | null;
+    setSort(s && ["display_desc", "proxy_desc", "weight_asc", "drop_asc"].includes(s) ? s : "display_desc");
+  }, []);
+
+  // ✅ (STEP 4) Sync stato -> URL (SOLO client) con debounce
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const t = setTimeout(() => {
       const p = new URLSearchParams();
 
@@ -97,11 +111,12 @@ export default function Page() {
       if (sort) p.set("sort", sort);
 
       const qs = p.toString();
-      router.replace(qs ? `/?${qs}` : `/`);
+      const newUrl = qs ? `/?${qs}` : `/`;
+      window.history.replaceState({}, "", newUrl);
     }, 250);
 
     return () => clearTimeout(t);
-  }, [q, view, brand, category, terrain, useType, plate, sort, router]);
+  }, [q, view, brand, category, terrain, useType, plate, sort]);
 
   // ✅ carica facets all’avvio
   useEffect(() => {
@@ -110,6 +125,7 @@ export default function Page() {
         const res = await fetch("/api/filters");
         const json = await res.json();
         if (!res.ok) throw new Error(json?.error || "Errore filters");
+
         setFacets({
           brands: json.brands || [],
           categories: json.categories || [],
@@ -171,7 +187,7 @@ export default function Page() {
     setView("list");
   }
 
-  // ✅ STEP 3: Top picks (in base alla distanza dal punto utente nella matrice)
+  // ✅ (STEP 3) Top picks (distanza al punto utente)
   const topPicks = useMemo(() => {
     return [...results]
       .sort((a, b) => distanceToUser(a, userX, userY) - distanceToUser(b, userX, userY))
@@ -311,14 +327,16 @@ export default function Page() {
         {loading ? "Caricamento..." : <>Risultati: <b>{results.length}</b></>}
       </div>
 
-      {/* ✅ Top picks (solo quando sei in matrice) */}
+      {/* Top picks */}
       {view === "matrix" && topPicks.length > 0 && (
         <div style={{ marginTop: 14, marginBottom: 12 }}>
           <h3 style={{ margin: "6px 0 10px 0" }}>Top picks per te</h3>
           <div style={{ display: "grid", gap: 8 }}>
             {topPicks.map((s, i) => (
               <div key={(s.id ?? i).toString()} style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}>
-                <b>{s.brand} {s.model}</b>{" "}
+                <b>
+                  {s.brand} {s.model}
+                </b>{" "}
                 <span style={{ opacity: 0.75 }}>
                   — cushion {s.cushion_score ?? "-"}, speed {s.speed_score ?? "-"}
                 </span>

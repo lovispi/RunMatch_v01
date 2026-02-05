@@ -11,6 +11,17 @@ import {
   Tooltip,
 } from "recharts";
 
+const CATEGORY_COLORS: Record<string, string> = {
+  daily: "#4f83ff",
+  trainer: "#4f83ff",
+  stability: "#5a6cff",
+  max_cushion: "#6a5cff",
+  speed: "#7b4bff",
+  race: "#8b3dff",
+  trail: "#6b4c8a",
+  default: "#7a7a7a",
+};
+
 type Shoe = {
   id?: string | number;
   brand: string | null;
@@ -102,8 +113,11 @@ export default function MatrixChart({ data }: { data: Shoe[] }) {
             />
             <Scatter
               data={points}
+              fill="#8884d8"
+              shape={(props: any) => {
               onClick={(p: any) => {
-                const url = p?.runrepeat_url;
+                const c = CATEGORY_COLORS[props.payload.category] || CATEGORY_COLORS.default;
+                return <circle {...props} fill={c} r={6} />;
                 if (url) window.open(url, "_blank", "noreferrer");
               }}
             />

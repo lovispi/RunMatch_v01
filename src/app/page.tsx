@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import MatrixChart from "@/components/MatrixChart";
+import dynamic from "next/dynamic";
+const MatrixChart = dynamic(() => import("@/components/MatrixChart"), { ssr: false });
 
 /* =========================
    Types

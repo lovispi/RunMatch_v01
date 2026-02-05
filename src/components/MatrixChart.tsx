@@ -112,15 +112,14 @@ export default function MatrixChart({ data }: { data: Shoe[] }) {
               }}
             />
             <Scatter
-              data={points}
-              fill="#8884d8"
-              shape={(props: any) => {
-              onClick={(p: any) => {
-                const c = CATEGORY_COLORS[props.payload.category] || CATEGORY_COLORS.default;
-                return <circle {...props} fill={c} r={6} />;
-                if (url) window.open(url, "_blank", "noreferrer");
-              }}
-            />
+  data={points}
+  fill="#8884d8"
+  shape={(props: any) => {
+    const c = CATEGORY_COLORS[props.payload.category] || CATEGORY_COLORS.default;
+    return <circle {...props} fill={c} r={6} />;
+  }}
+/>
+
           </ScatterChart>
         </ResponsiveContainer>
       </div>

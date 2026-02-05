@@ -195,11 +195,33 @@ export default function Page() {
   }, [results]);
 
   return (
-    <main style={{ maxWidth: 980, margin: "40px auto", padding: 16, fontFamily: "system-ui" }}>
-      <h1 style={{ fontSize: 24, marginBottom: 8 }}>Shoe Search</h1>
-      <p style={{ marginTop: 0, opacity: 0.8 }}>
-        Cerca per brand/model + filtri. La ricerca parte automaticamente quando cambi qualcosa.
-      </p>
+    <main
+  style={{
+  padding: 14,
+  borderRadius: 14,
+  background: "linear-gradient(135deg, #4f5cff, #7b4bff)",
+  color: "white",
+  boxShadow: "0 8px 24px rgba(79,92,255,0.35)",
+}}
+>
+  <div
+    style={{
+      maxWidth: 1100,
+      margin: "0 auto",
+      background: "white",
+      borderRadius: 20,
+      padding: 24,
+      boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
+    }}
+  >
+
+      <h1 style={{ fontSize: 28, marginBottom: 4, fontWeight: 800 }}>
+  RunMatch
+</h1>
+<p style={{ marginTop: 0, opacity: 0.75 }}>
+  Trova le scarpe perfette per il tuo stile di corsa
+</p>
+
 
       {/* QUERY + BOTTONI */}
       <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
@@ -218,13 +240,14 @@ export default function Page() {
         <button
           onClick={() => runSearch(url)}
           style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #333",
-            background: "#111",
-            color: "white",
-            cursor: "pointer",
-          }}
+  padding: "8px 16px",
+  borderRadius: 999,
+  border: "none",
+  background: view === "list" ? "#4f5cff" : "#eef0ff",
+  color: view === "list" ? "white" : "#4f5cff",
+  fontWeight: 600,
+  cursor: "pointer",
+}}
           disabled={loading}
         >
           {loading ? "..." : "Cerca"}
@@ -233,12 +256,14 @@ export default function Page() {
         <button
           onClick={resetFilters}
           style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #ccc",
-            background: "white",
-            cursor: "pointer",
-          }}
+  padding: "8px 16px",
+  borderRadius: 999,
+  border: "none",
+  background: view === "list" ? "#4f5cff" : "#eef0ff",
+  color: view === "list" ? "white" : "#4f5cff",
+  fontWeight: 600,
+  cursor: "pointer",
+}}
           disabled={loading}
         >
           Reset
@@ -250,29 +275,39 @@ export default function Page() {
         <button
           onClick={() => setView("list")}
           style={{
-            padding: "8px 12px",
-            borderRadius: 999,
-            border: "1px solid #ccc",
-            background: view === "list" ? "#111" : "white",
-            color: view === "list" ? "white" : "#111",
-            cursor: "pointer",
-          }}
+  padding: "8px 16px",
+  borderRadius: 999,
+  border: "none",
+  background: view === "list" ? "#4f5cff" : "#eef0ff",
+  color: view === "list" ? "white" : "#4f5cff",
+  fontWeight: 600,
+  cursor: "pointer",
+}}
         >
           Lista
         </button>
         <button
           onClick={() => setView("matrix")}
           style={{
-            padding: "8px 12px",
-            borderRadius: 999,
-            border: "1px solid #ccc",
-            background: view === "matrix" ? "#111" : "white",
-            color: view === "matrix" ? "white" : "#111",
-            cursor: "pointer",
-          }}
+  borderRadius: 16,
+  padding: 16,
+  display: "grid",
+  gap: 8,
+  background: "white",
+  boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+}}
         >
           Matrice
         </button>
+        style={{
+  padding: "8px 16px",
+  borderRadius: 999,
+  border: "none",
+  background: view === "list" ? "#4f5cff" : "#eef0ff",
+  color: view === "list" ? "white" : "#4f5cff",
+  fontWeight: 600,
+  cursor: "pointer",
+}}
       </div>
 
       {/* DROPDOWN FILTRI */}
@@ -434,5 +469,6 @@ function FilterSelect(props: {
         ))}
       </select>
     </div>
-  );
+  </main> 
+);
 }
